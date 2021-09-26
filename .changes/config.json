@@ -1,0 +1,16 @@
+{
+  "gitSiteUrl": "https://www.github.com/tauri-apps/tauri-plugin-window-state/",
+  "pkgManagers": {
+    "rust": {
+      "version": true,
+      "publish": true,
+      "getPublishedVersion": "cargo search ${ pkg.pkg } --limit 1 | sed -nE 's/^[^\"]*\"//; s/\".*//1p' -"
+    }
+  },
+  "packages": {
+    "tauri-plugin-window-state": {
+      "path": ".",
+      "manager": "rust"
+    }
+  }
+}
