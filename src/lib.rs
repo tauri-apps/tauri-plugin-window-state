@@ -60,6 +60,8 @@ impl<R: Runtime> Plugin<R> for WindowState {
                 }))
                 .unwrap();
         }
+        window.show().unwrap();
+        window.set_focus().unwrap();
     }
 
     fn on_event(&mut self, app: &AppHandle<R>, event: &Event) {
