@@ -14,18 +14,22 @@ Please note, below in the dependencies you can also lock to a revision/tag in th
 
 `src-tauri/Cargo.toml`
 ```yaml
+[dependencies.tauri]
+git = "https://github.com/tauri-apps/tauri/"
+branch = "next"
+features = ["api-all"]
+
 [dependencies.tauri-plugin-window-state]
 git = "https://github.com/tauri-apps/tauri-plugin-window-state"
-tag = "v0.1.0"
+tag = "tauri-plugin-window-state-v0.1.0"
 #branch = "main"
 ```
 
 Use in `src-tauri/src/main.rs`:
 ```rust
 fn main() {
-    tauri::AppBuilder::new()
+    tauri::Builder::default()
         .plugin(tauri_plugin_window_state::WindowState::default())
-        .build()
         .run();
 }
 ```
