@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use tauri::{
     plugin::{Plugin, Result as PluginResult},
-    AppHandle, Event, Manager, PhysicalPosition, PhysicalSize, Position, Runtime, Size, Window,
+    AppHandle, Event, PhysicalPosition, PhysicalSize, Position, Runtime, Size, Window, WindowEvent,
 };
 
 use std::{
@@ -46,54 +46,63 @@ impl<R: Runtime> Plugin<R> for WindowState {
     }
 
     fn created(&mut self, window: Window<R>) {
-        if let Some(state) = self.cache.lock().unwrap().get(window.label()) {
-            window
-                .set_position(Position::Physical(PhysicalPosition {
-                    x: state.x,
-                    y: state.y,
-                }))
-                .unwrap();
-            window
-                .set_size(Size::Physical(PhysicalSize {
-                    width: state.width,
-                    height: state.height,
-                }))
-                .unwrap();
+        {
+            let mut c = self.cache.lock().unwrap();
+            if let Some(state) = c.get(window.label()) {
+                window
+                    .set_position(Position::Physical(PhysicalPosition {
+                        x: state.x,
+                        y: state.y,
+                    }))
+                    .unwrap();
+                window
+                    .set_size(Size::Physical(PhysicalSize {
+                        width: state.width,
+                        height: state.height,
+                    }))
+                    .unwrap();
+            } else {
+                c.insert(window.label().into(), Default::default());
+            }
         }
+
+        let cache = self.cache.clone();
+        let label = window.label().to_string();
+        window.on_window_event(move |e| match e {
+            WindowEvent::Moved(position) => {
+                let mut c = cache.lock().unwrap();
+                let state = c.get_mut(&label).unwrap();
+                state.x = position.x;
+                state.y = position.y;
+            }
+            WindowEvent::Resized(size) => {
+                let mut c = cache.lock().unwrap();
+                let state = c.get_mut(&label).unwrap();
+                state.width = size.width;
+                state.height = size.height;
+            }
+            _ => {}
+        });
+
         window.show().unwrap();
         window.set_focus().unwrap();
     }
 
     fn on_event(&mut self, app: &AppHandle<R>, event: &Event) {
-        match event {
-            Event::CloseRequested { label, api: _, .. } => {
-                let window = app.get_window(&label).unwrap();
-                let position = window.outer_position().unwrap();
-                let size = window.inner_size().unwrap();
-
-                let mut c = self.cache.lock().unwrap();
-                let state = c.entry(label.clone()).or_insert_with(Default::default);
-                state.x = position.x;
-                state.y = position.y;
-                state.width = size.width;
-                state.height = size.height;
+        if let Event::Exit = event {
+            if let Some(app_dir) = app.path_resolver().app_dir() {
+                let state_path = app_dir.join(STATE_FILENAME);
+                let state = self.cache.lock().unwrap();
+                let _ = create_dir_all(&app_dir)
+                    .map_err(tauri::api::Error::Io)
+                    .and_then(|_| File::create(state_path).map_err(Into::into))
+                    .and_then(|mut f| {
+                        f.write_all(
+                            &bincode::serialize(&*state).map_err(tauri::api::Error::Bincode)?,
+                        )
+                        .map_err(Into::into)
+                    });
             }
-            Event::Exit => {
-                if let Some(app_dir) = app.path_resolver().app_dir() {
-                    let state_path = app_dir.join(STATE_FILENAME);
-                    let state = self.cache.lock().unwrap();
-                    let _ = create_dir_all(&app_dir)
-                        .map_err(tauri::api::Error::Io)
-                        .and_then(|_| File::create(state_path).map_err(Into::into))
-                        .and_then(|mut f| {
-                            f.write_all(
-                                &bincode::serialize(&*state).map_err(tauri::api::Error::Bincode)?,
-                            )
-                            .map_err(Into::into)
-                        });
-                }
-            }
-            _ => (),
         }
     }
 }
