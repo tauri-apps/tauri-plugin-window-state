@@ -62,7 +62,17 @@ impl<R: Runtime> Plugin<R> for WindowState {
                     }))
                     .unwrap();
             } else {
-                c.insert(window.label().into(), Default::default());
+                let PhysicalSize { width, height } = window.inner_size().unwrap();
+                let PhysicalPosition { x, y } = window.outer_position().unwrap();
+                c.insert(
+                    window.label().into(),
+                    WindowMetadata {
+                        width,
+                        height,
+                        x,
+                        y,
+                    },
+                );
             }
         }
 
