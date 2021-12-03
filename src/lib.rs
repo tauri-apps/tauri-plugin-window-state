@@ -78,18 +78,36 @@ impl<R: Runtime> Plugin<R> for WindowState {
 
         let cache = self.cache.clone();
         let label = window.label().to_string();
+        let window_clone = window.clone();
         window.on_window_event(move |e| match e {
             WindowEvent::Moved(position) => {
-                let mut c = cache.lock().unwrap();
-                let state = c.get_mut(&label).unwrap();
-                state.x = position.x;
-                state.y = position.y;
+                let size = window_clone.inner_size().unwrap();
+                // On some platforms, when a window gets minimized, it will report a
+                // position with a huge negative value (-32000), so for now
+                // don't save the position if the window is not visible on screen.
+                // also subtract a 25px, just to ensure there is enough space to
+                // be able to resize the window.
+                // TODO: use `window.is_minimized()` once it is implemented
+                if position.x > 0 - size.width as i32 - 25
+                    && position.y > 0 - size.height as i32 - 25
+                {
+                    let mut c = cache.lock().unwrap();
+                    let state = c.get_mut(&label).unwrap();
+                    state.x = position.x;
+                    state.y = position.y;
+                };
             }
             WindowEvent::Resized(size) => {
-                let mut c = cache.lock().unwrap();
-                let state = c.get_mut(&label).unwrap();
-                state.width = size.width;
-                state.height = size.height;
+                // It is not sane to save a 0 window height or width,
+                // the window' won't be resizable by the mouse and some platforms will
+                // report 0,0 for window size when it gets minimized.
+                // TODO: also use `window.is_minimized()` once it is implemented
+                if size.width > 0 && size.height > 0 {
+                    let mut c = cache.lock().unwrap();
+                    let state = c.get_mut(&label).unwrap();
+                    state.width = size.width;
+                    state.height = size.height;
+                }
             }
             _ => {}
         });
