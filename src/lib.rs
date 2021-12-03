@@ -88,13 +88,16 @@ impl<R: Runtime> Plugin<R> for WindowState {
                 // also subtract a 25px, just to ensure there is enough space to
                 // be able to resize the window.
                 // TODO: use `window.is_minimized()` once it is implemented
-                if position.x > 0 - size.width as i32 - 25
-                    && position.y > 0 - size.height as i32 - 25
-                {
-                    let mut c = cache.lock().unwrap();
-                    let state = c.get_mut(&label).unwrap();
-                    state.x = position.x;
-                    state.y = position.y;
+                if let Some(monitor) = window_clone.current_monitor().unwrap() {
+                    let monitor_size = monitor.position();
+                    if position.x > monitor_size.x - size.width as i32 - 25
+                        && position.y > monitor_size.y - size.height as i32 - 25
+                    {
+                        let mut c = cache.lock().unwrap();
+                        let state = c.get_mut(&label).unwrap();
+                        state.x = position.x;
+                        state.y = position.y;
+                    };
                 };
             }
             WindowEvent::Resized(size) => {
