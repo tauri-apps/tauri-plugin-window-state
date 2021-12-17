@@ -89,9 +89,9 @@ impl<R: Runtime> Plugin<R> for WindowState {
                 // be able to resize the window.
                 // TODO: use `window.is_minimized()` once it is implemented
                 if let Some(monitor) = window_clone.current_monitor().unwrap() {
-                    let monitor_size = monitor.position();
-                    if position.x > monitor_size.x - size.width as i32 - 25
-                        && position.y > monitor_size.y - size.height as i32 - 25
+                    let monitor_position = monitor.position();
+                    if position.x > monitor_position.x - size.width as i32 - 25
+                        && position.y > monitor_position.y - size.height as i32 - 25
                     {
                         let mut c = cache.lock().unwrap();
                         let state = c.get_mut(&label).unwrap();
