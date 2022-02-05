@@ -5,7 +5,7 @@
 use serde::{Deserialize, Serialize};
 use tauri::{
   plugin::{Plugin, Result as PluginResult},
-  AppHandle, Event, PhysicalPosition, PhysicalSize, Position, Runtime, Size, Window, WindowEvent,
+  AppHandle, RunEvent, PhysicalPosition, PhysicalSize, Position, Runtime, Size, Window, WindowEvent,
 };
 
 use std::{
@@ -123,8 +123,8 @@ impl<R: Runtime> Plugin<R> for WindowState {
     window.set_focus().unwrap();
   }
 
-  fn on_event(&mut self, app: &AppHandle<R>, event: &Event) {
-    if let Event::Exit = event {
+  fn on_event(&mut self, app: &AppHandle<R>, event: &RunEvent) {
+    if let RunEvent::Exit = event {
       if let Some(app_dir) = app.path_resolver().app_dir() {
         let state_path = app_dir.join(STATE_FILENAME);
         let state = self.cache.lock().unwrap();
