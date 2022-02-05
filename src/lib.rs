@@ -5,7 +5,8 @@
 use serde::{Deserialize, Serialize};
 use tauri::{
   plugin::{Plugin, Result as PluginResult},
-  AppHandle, RunEvent, PhysicalPosition, PhysicalSize, Position, Runtime, Size, Window, WindowEvent,
+  AppHandle, PhysicalPosition, PhysicalSize, Position, RunEvent, Runtime, Size, Window,
+  WindowEvent,
 };
 
 use std::{
