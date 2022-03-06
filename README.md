@@ -9,7 +9,7 @@ There are three general methods of installation that we can recommend.
 2. Git submodule install this repo in your tauri project and then use `file` protocol to ingest the source
 3. Use crates.io and npm (easiest, and requires you to trust that our publishing pipeline worked)
 
-For more details and usage see [the vanilla demo](examples/vanilla/src-tauri/src/main.rs).
+For more details and usage see [the example app](examples/svelte-app/src-tauri/src/main.rs).
 Please note, below in the dependencies you can also lock to a revision/tag in the `Cargo.toml`.
 
 `src-tauri/Cargo.toml`
