@@ -24,6 +24,7 @@ struct WindowMetadata {
   height: u32,
   x: i32,
   y: i32,
+  maximized: bool,
 }
 
 #[derive(Default)]
@@ -66,9 +67,13 @@ impl<R: Runtime> Plugin<R> for WindowState {
             height: state.height,
           }))
           .unwrap();
+        if state.maximized {
+          let _ = window.maximize();
+        }
       } else {
         let PhysicalSize { width, height } = window.inner_size().unwrap();
         let PhysicalPosition { x, y } = window.outer_position().unwrap();
+        let maximized = window.is_maximized().unwrap_or(false);
         c.insert(
           window.label().into(),
           WindowMetadata {
@@ -76,6 +81,7 @@ impl<R: Runtime> Plugin<R> for WindowState {
             height,
             x,
             y,
+            maximized,
           },
         );
       }
@@ -102,6 +108,7 @@ impl<R: Runtime> Plugin<R> for WindowState {
             let state = c.get_mut(&label).unwrap();
             state.x = position.x;
             state.y = position.y;
+            state.maximized = window_clone.is_maximized().unwrap_or(false);
           };
         };
       }
@@ -115,6 +122,7 @@ impl<R: Runtime> Plugin<R> for WindowState {
           let state = c.get_mut(&label).unwrap();
           state.width = size.width;
           state.height = size.height;
+          state.maximized = window_clone.is_maximized().unwrap_or(false);
         }
       }
       _ => {}
