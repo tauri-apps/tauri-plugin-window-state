@@ -98,19 +98,10 @@ impl<R: Runtime> Plugin<R> for WindowState {
         let is_maximized = window_clone.is_maximized().unwrap_or(false);
         state.maximized = is_maximized;
 
-        let size = window_clone.inner_size().unwrap();
-        // On some platforms, when a window gets minimized, it will report a
-        // position with a huge negative value (-32000), so for now
-        // don't save the position if the window is not visible on screen.
-        // also subtract a 25px, just to ensure there is enough space to
-        // be able to resize the window.
-        // TODO: use `window.is_minimized()` once it is implemented
         if let Some(monitor) = window_clone.current_monitor().unwrap() {
           let monitor_position = monitor.position();
-          if position.x > monitor_position.x - size.width as i32 - 25
-            && position.y > monitor_position.y - size.height as i32 - 25
-            && !is_maximized
-          {
+          // save only window positions that are inside the current monitor
+          if position.x > monitor_position.x && position.y > monitor_position.y && !is_maximized {
             state.x = position.x;
             state.y = position.y;
           };
@@ -123,10 +114,7 @@ impl<R: Runtime> Plugin<R> for WindowState {
         let is_maximized = window_clone.is_maximized().unwrap_or(false);
         state.maximized = is_maximized;
 
-        // It is not sane to save a 0 window height or width,
-        // the window' won't be resizable by the mouse and some platforms will
-        // report 0,0 for window size when it gets minimized.
-        // TODO: also use `window.is_minimized()` once it is implemented
+        // It doesn't make sense to save a window with 0 height or width
         if size.width > 0 && size.height > 0 && !is_maximized {
           state.width = size.width;
           state.height = size.height;
