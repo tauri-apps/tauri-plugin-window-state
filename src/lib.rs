@@ -68,7 +68,7 @@ impl<R: Runtime> Plugin<R> for WindowState {
           }))
           .unwrap();
         if state.maximized {
-          let _ = window.maximize();
+          window.maximize().unwrap();
         }
       } else {
         let PhysicalSize { width, height } = window.inner_size().unwrap();
@@ -92,6 +92,12 @@ impl<R: Runtime> Plugin<R> for WindowState {
     let window_clone = window.clone();
     window.on_window_event(move |e| match e {
       WindowEvent::Moved(position) => {
+        let mut c = cache.lock().unwrap();
+        let state = c.get_mut(&label).unwrap();
+
+        let is_maximized = window_clone.is_maximized().unwrap_or(false);
+        state.maximized = is_maximized;
+
         let size = window_clone.inner_size().unwrap();
         // On some platforms, when a window gets minimized, it will report a
         // position with a huge negative value (-32000), so for now
@@ -103,26 +109,27 @@ impl<R: Runtime> Plugin<R> for WindowState {
           let monitor_position = monitor.position();
           if position.x > monitor_position.x - size.width as i32 - 25
             && position.y > monitor_position.y - size.height as i32 - 25
+            && !is_maximized
           {
-            let mut c = cache.lock().unwrap();
-            let state = c.get_mut(&label).unwrap();
             state.x = position.x;
             state.y = position.y;
-            state.maximized = window_clone.is_maximized().unwrap_or(false);
           };
         };
       }
       WindowEvent::Resized(size) => {
+        let mut c = cache.lock().unwrap();
+        let state = c.get_mut(&label).unwrap();
+
+        let is_maximized = window_clone.is_maximized().unwrap_or(false);
+        state.maximized = is_maximized;
+
         // It is not sane to save a 0 window height or width,
         // the window' won't be resizable by the mouse and some platforms will
         // report 0,0 for window size when it gets minimized.
         // TODO: also use `window.is_minimized()` once it is implemented
-        if size.width > 0 && size.height > 0 {
-          let mut c = cache.lock().unwrap();
-          let state = c.get_mut(&label).unwrap();
+        if size.width > 0 && size.height > 0 && !is_maximized {
           state.width = size.width;
           state.height = size.height;
-          state.maximized = window_clone.is_maximized().unwrap_or(false);
         }
       }
       _ => {}
