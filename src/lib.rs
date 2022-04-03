@@ -25,6 +25,7 @@ struct WindowMetadata {
   x: i32,
   y: i32,
   maximized: bool,
+  visible: bool,
 }
 
 #[derive(Default)]
@@ -54,6 +55,7 @@ impl<R: Runtime> Plugin<R> for WindowState {
   fn created(&mut self, window: Window<R>) {
     {
       let mut c = self.cache.lock().unwrap();
+      let mut should_show = true;
       if let Some(state) = c.get(window.label()) {
         window
           .set_position(Position::Physical(PhysicalPosition {
@@ -70,10 +72,12 @@ impl<R: Runtime> Plugin<R> for WindowState {
         if state.maximized {
           window.maximize().unwrap();
         }
+        should_show = state.visible;
       } else {
         let PhysicalSize { width, height } = window.inner_size().unwrap();
         let PhysicalPosition { x, y } = window.outer_position().unwrap();
         let maximized = window.is_maximized().unwrap_or(false);
+        let visible = window.is_visible().unwrap_or(true);
         c.insert(
           window.label().into(),
           WindowMetadata {
@@ -82,8 +86,13 @@ impl<R: Runtime> Plugin<R> for WindowState {
             x,
             y,
             maximized,
+            visible,
           },
         );
+      }
+      if should_show {
+        window.show().unwrap();
+        window.set_focus().unwrap();
       }
     }
 
@@ -120,11 +129,13 @@ impl<R: Runtime> Plugin<R> for WindowState {
           state.height = size.height;
         }
       }
+      WindowEvent::CloseRequested { .. } => {
+        let mut c = cache.lock().unwrap();
+        let state = c.get_mut(&label).unwrap();
+        state.visible = window_clone.is_visible().unwrap_or(true);
+      }
       _ => {}
     });
-
-    window.show().unwrap();
-    window.set_focus().unwrap();
   }
 
   fn on_event(&mut self, app: &AppHandle<R>, event: &RunEvent) {
