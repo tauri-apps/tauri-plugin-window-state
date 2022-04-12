@@ -18,13 +18,13 @@ use std::{
 const STATE_FILENAME: &str = ".window-state";
 
 #[derive(Debug, Default, Deserialize, Serialize)]
-pub struct WindowMetadata {
-  pub width: u32,
-  pub height: u32,
-  pub x: i32,
-  pub y: i32,
-  pub maximized: bool,
-  pub visible: bool,
+struct WindowMetadata {
+  width: u32,
+  height: u32,
+  x: i32,
+  y: i32,
+  maximized: bool,
+  visible: bool,
 }
 
 struct WindowStateCache(Arc<Mutex<HashMap<String, WindowMetadata>>>);
