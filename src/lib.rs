@@ -29,6 +29,30 @@ struct WindowMetadata {
 
 struct WindowStateCache(Arc<Mutex<HashMap<String, WindowMetadata>>>);
 
+pub trait AppHandleExt {
+  fn save_window_state(&self) -> tauri::Result<()>;
+}
+
+impl<R: Runtime> AppHandleExt for tauri::AppHandle<R> {
+  fn save_window_state(&self) -> tauri::Result<()> {
+    if let Some(app_dir) = self.path_resolver().app_dir() {
+      let state_path = app_dir.join(STATE_FILENAME);
+      let cache = self.state::<WindowStateCache>();
+      let state = cache.0.lock().unwrap();
+      create_dir_all(&app_dir)
+        .map_err(tauri::api::Error::Io)
+        .and_then(|_| File::create(state_path).map_err(Into::into))
+        .and_then(|mut f| {
+          f.write_all(&bincode::serialize(&*state).map_err(tauri::api::Error::Bincode)?)
+            .map_err(Into::into)
+        })
+        .map_err(Into::into)
+    } else {
+      Ok(())
+    }
+  }
+}
+
 pub trait WindowExt {
   fn restore_state(&self) -> tauri::Result<()>;
 }
@@ -163,18 +187,7 @@ impl Builder {
       })
       .on_event(|app, event| {
         if let RunEvent::Exit = event {
-          if let Some(app_dir) = app.path_resolver().app_dir() {
-            let state_path = app_dir.join(STATE_FILENAME);
-            let cache = app.state::<WindowStateCache>();
-            let state = cache.0.lock().unwrap();
-            let _ = create_dir_all(&app_dir)
-              .map_err(tauri::api::Error::Io)
-              .and_then(|_| File::create(state_path).map_err(Into::into))
-              .and_then(|mut f| {
-                f.write_all(&bincode::serialize(&*state).map_err(tauri::api::Error::Bincode)?)
-                  .map_err(Into::into)
-              });
-          }
+          let _ = app.save_window_state();
         }
       })
       .build()
