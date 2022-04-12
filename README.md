@@ -29,7 +29,7 @@ Use in `src-tauri/src/main.rs`:
 ```rust
 fn main() {
     tauri::Builder::default()
-        .plugin(tauri_plugin_window_state::WindowState::default())
+        .plugin(tauri_plugin_window_state::Builder::default().build())
         .run();
 }
 ```
