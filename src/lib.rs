@@ -122,38 +122,41 @@ impl Builder {
         window.on_window_event(move |e| match e {
           WindowEvent::Moved(position) => {
             let mut c = cache.lock().unwrap();
-            let state = c.get_mut(&label).unwrap();
+            if let Some(state) = c.get_mut(&label) {
+              let is_maximized = window_clone.is_maximized().unwrap_or(false);
+              state.maximized = is_maximized;
 
-            let is_maximized = window_clone.is_maximized().unwrap_or(false);
-            state.maximized = is_maximized;
-
-            if let Some(monitor) = window_clone.current_monitor().unwrap() {
-              let monitor_position = monitor.position();
-              // save only window positions that are inside the current monitor
-              if position.x > monitor_position.x && position.y > monitor_position.y && !is_maximized
-              {
-                state.x = position.x;
-                state.y = position.y;
+              if let Some(monitor) = window_clone.current_monitor().unwrap() {
+                let monitor_position = monitor.position();
+                // save only window positions that are inside the current monitor
+                if position.x > monitor_position.x
+                  && position.y > monitor_position.y
+                  && !is_maximized
+                {
+                  state.x = position.x;
+                  state.y = position.y;
+                };
               };
-            };
+            }
           }
           WindowEvent::Resized(size) => {
             let mut c = cache.lock().unwrap();
-            let state = c.get_mut(&label).unwrap();
+            if let Some(state) = c.get_mut(&label) {
+              let is_maximized = window_clone.is_maximized().unwrap_or(false);
+              state.maximized = is_maximized;
 
-            let is_maximized = window_clone.is_maximized().unwrap_or(false);
-            state.maximized = is_maximized;
-
-            // It doesn't make sense to save a window with 0 height or width
-            if size.width > 0 && size.height > 0 && !is_maximized {
-              state.width = size.width;
-              state.height = size.height;
+              // It doesn't make sense to save a window with 0 height or width
+              if size.width > 0 && size.height > 0 && !is_maximized {
+                state.width = size.width;
+                state.height = size.height;
+              }
             }
           }
           WindowEvent::CloseRequested { .. } => {
             let mut c = cache.lock().unwrap();
-            let state = c.get_mut(&label).unwrap();
-            state.visible = window_clone.is_visible().unwrap_or(true);
+            if let Some(state) = c.get_mut(&label) {
+              state.visible = window_clone.is_visible().unwrap_or(true);
+            }
           }
           _ => {}
         });
