@@ -27,7 +27,7 @@ struct WindowMetadata {
   visible: bool,
 }
 
-struct WindowStateCache(Arc<Mutex<HashMap<String, WindowMetadata>>>);
+pub struct WindowStateCache(pub Arc<Mutex<HashMap<String, WindowMetadata>>>);
 
 pub trait WindowExt {
   fn restore_state(&self) -> tauri::Result<()>;
