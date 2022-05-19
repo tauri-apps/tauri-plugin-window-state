@@ -6,6 +6,6 @@ license = "Apache-2.0 OR MIT"
 edition = "2021"
 
 [dependencies]
-tauri = "1.0.0-rc.8"
+tauri = "1.0.0-rc.11"
 serde = "1.0"
 bincode = "1.3"
