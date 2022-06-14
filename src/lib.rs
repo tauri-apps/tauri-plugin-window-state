@@ -17,6 +17,20 @@ use std::{
 
 const STATE_FILENAME: &str = ".window-state";
 
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+  #[error(transparent)]
+  Io(#[from] std::io::Error),
+  #[error(transparent)]
+  Tauri(#[from] tauri::Error),
+  #[error(transparent)]
+  TauriApi(#[from] tauri::api::Error),
+  #[error(transparent)]
+  Bincode(#[from] Box<bincode::ErrorKind>),
+}
+
+pub type Result<T> = std::result::Result<T, Error>;
+
 #[derive(Debug, Default, Deserialize, Serialize)]
 struct WindowMetadata {
   width: u32,
@@ -30,23 +44,22 @@ struct WindowMetadata {
 struct WindowStateCache(Arc<Mutex<HashMap<String, WindowMetadata>>>);
 
 pub trait AppHandleExt {
-  fn save_window_state(&self) -> tauri::Result<()>;
+  fn save_window_state(&self) -> Result<()>;
 }
 
 impl<R: Runtime> AppHandleExt for tauri::AppHandle<R> {
-  fn save_window_state(&self) -> tauri::Result<()> {
+  fn save_window_state(&self) -> Result<()> {
     if let Some(app_dir) = self.path_resolver().app_dir() {
       let state_path = app_dir.join(STATE_FILENAME);
       let cache = self.state::<WindowStateCache>();
       let state = cache.0.lock().unwrap();
       create_dir_all(&app_dir)
-        .map_err(tauri::api::Error::Io)
+        .map_err(Error::Io)
         .and_then(|_| File::create(state_path).map_err(Into::into))
         .and_then(|mut f| {
-          f.write_all(&bincode::serialize(&*state).map_err(tauri::api::Error::Bincode)?)
+          f.write_all(&bincode::serialize(&*state).map_err(Error::Bincode)?)
             .map_err(Into::into)
         })
-        .map_err(Into::into)
     } else {
       Ok(())
     }
@@ -122,6 +135,7 @@ impl Builder {
             if state_path.exists() {
               Arc::new(Mutex::new(
                 tauri::api::file::read_binary(state_path)
+                  .map_err(Error::TauriApi)
                   .and_then(|state| bincode::deserialize(&state).map_err(Into::into))
                   .unwrap_or_default(),
               ))
