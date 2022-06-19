@@ -14,15 +14,9 @@ Please note, below in the dependencies you can also lock to a revision/tag in th
 
 `src-tauri/Cargo.toml`
 ```yaml
-[dependencies.tauri]
-git = "https://github.com/tauri-apps/tauri/"
-branch = "next"
-features = ["api-all"]
-
-[dependencies.tauri-plugin-window-state]
-git = "https://github.com/tauri-apps/tauri-plugin-window-state"
-tag = "tauri-plugin-window-state-v0.1.0"
-#branch = "main"
+[dependencies]
+tauri = "1.0"
+tauri-plugin-window-state = "0.1"
 ```
 
 Use in `src-tauri/src/main.rs`:

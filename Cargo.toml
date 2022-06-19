@@ -1,8 +1,10 @@
 [package]
 name = "tauri-plugin-window-state"
-version = "0.1.0"
+version = "0.0.0"
 authors = [ "Tauri Programme within The Commons Conservancy" ]
+description = "A Tauri Plugin that allows usage of a localhost server instead of the custom protocol in production builds"
 license = "Apache-2.0 OR MIT"
+repository = "https://github.com/tauri-apps/tauri-plugin-localhost"
 edition = "2021"
 
 [dependencies]
