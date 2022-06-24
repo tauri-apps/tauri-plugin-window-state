@@ -115,18 +115,10 @@ impl<R: Runtime> WindowExt for Window<R> {
 }
 
 #[derive(Default)]
-pub struct Builder {
-  skip_check_on_window_create: bool,
-}
+pub struct Builder {}
 
 impl Builder {
-  pub fn skip_check_on_window_create(mut self) -> Self {
-    self.skip_check_on_window_create = true;
-    self
-  }
-
   pub fn build<R: Runtime>(self) -> TauriPlugin<R> {
-    let skip_check_on_window_create = self.skip_check_on_window_create;
     PluginBuilder::new("window-state")
       .setup(|app| {
         let cache: Arc<Mutex<HashMap<String, WindowMetadata>>> =
@@ -149,9 +141,7 @@ impl Builder {
         Ok(())
       })
       .on_webview_ready(move |window| {
-        if !skip_check_on_window_create {
-          let _ = window.restore_state();
-        }
+        let _ = window.restore_state();
 
         let cache = window.state::<WindowStateCache>();
         let cache = cache.0.clone();
