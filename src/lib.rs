@@ -67,11 +67,11 @@ impl<R: Runtime> AppHandleExt for tauri::AppHandle<R> {
 }
 
 pub trait WindowExt {
-  fn restore_state(&self) -> tauri::Result<()>;
+  fn restore_state(&self, auto_show: bool) -> tauri::Result<()>;
 }
 
 impl<R: Runtime> WindowExt for Window<R> {
-  fn restore_state(&self) -> tauri::Result<()> {
+  fn restore_state(&self, auto_show: bool) -> tauri::Result<()> {
     let cache = self.state::<WindowStateCache>();
     let mut c = cache.0.lock().unwrap();
     let mut should_show = true;
@@ -105,7 +105,7 @@ impl<R: Runtime> WindowExt for Window<R> {
         },
       );
     }
-    if should_show {
+    if auto_show && should_show {
       self.show()?;
       self.set_focus()?;
     }
@@ -114,8 +114,15 @@ impl<R: Runtime> WindowExt for Window<R> {
   }
 }
 
-#[derive(Default)]
-pub struct Builder {}
+pub struct Builder {
+  auto_show: bool,
+}
+
+impl Default for Builder {
+  fn default() -> Self {
+    Builder { auto_show: true }
+  }
+}
 
 impl Builder {
   pub fn build<R: Runtime>(self) -> TauriPlugin<R> {
@@ -141,7 +148,7 @@ impl Builder {
         Ok(())
       })
       .on_webview_ready(move |window| {
-        let _ = window.restore_state();
+        let _ = window.restore_state(self.auto_show);
 
         let cache = window.state::<WindowStateCache>();
         let cache = cache.0.clone();
@@ -195,5 +202,10 @@ impl Builder {
         }
       })
       .build()
+  }
+  pub fn set_auto_show(mut self, auto_show: bool) -> Self {
+    self.auto_show = auto_show;
+
+    self
   }
 }
