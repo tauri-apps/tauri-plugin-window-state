@@ -15,7 +15,7 @@ use std::{
   sync::{Arc, Mutex},
 };
 
-const STATE_FILENAME: &str = ".window-state";
+pub const STATE_FILENAME: &str = ".window-state";
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -39,6 +39,7 @@ struct WindowMetadata {
   y: i32,
   maximized: bool,
   visible: bool,
+  decorated: bool,
 }
 
 struct WindowStateCache(Arc<Mutex<HashMap<String, WindowMetadata>>>);
@@ -76,6 +77,7 @@ impl<R: Runtime> WindowExt for Window<R> {
     let mut c = cache.0.lock().unwrap();
     let mut should_show = true;
     if let Some(state) = c.get(self.label()) {
+      self.set_decorations(state.decorated)?;
       self.set_position(Position::Physical(PhysicalPosition {
         x: state.x,
         y: state.y,
@@ -93,6 +95,7 @@ impl<R: Runtime> WindowExt for Window<R> {
       let PhysicalPosition { x, y } = self.outer_position()?;
       let maximized = self.is_maximized().unwrap_or(false);
       let visible = self.is_visible().unwrap_or(true);
+      let decorated = self.is_decorated().unwrap_or(true);
       c.insert(
         self.label().into(),
         WindowMetadata {
@@ -102,6 +105,7 @@ impl<R: Runtime> WindowExt for Window<R> {
           y,
           maximized,
           visible,
+          decorated,
         },
       );
     }
@@ -178,6 +182,7 @@ impl Builder {
             let mut c = cache.lock().unwrap();
             if let Some(state) = c.get_mut(&label) {
               let is_maximized = window_clone.is_maximized().unwrap_or(false);
+              state.decorated = window_clone.is_decorated().unwrap_or(true);
               state.maximized = is_maximized;
 
               // It doesn't make sense to save a window with 0 height or width
