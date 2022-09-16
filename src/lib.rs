@@ -40,10 +40,10 @@ struct WindowMetadata {
   maximized: bool,
   visible: bool,
   decorated: bool,
+  fullscreen: bool,
 }
 
 struct WindowStateCache(Arc<Mutex<HashMap<String, WindowMetadata>>>);
-
 pub trait AppHandleExt {
   fn save_window_state(&self) -> Result<()>;
 }
@@ -89,6 +89,8 @@ impl<R: Runtime> WindowExt for Window<R> {
       if state.maximized {
         self.maximize()?;
       }
+      self.set_fullscreen(state.fullscreen)?;
+
       should_show = state.visible;
     } else {
       let PhysicalSize { width, height } = self.inner_size()?;
@@ -96,6 +98,7 @@ impl<R: Runtime> WindowExt for Window<R> {
       let maximized = self.is_maximized().unwrap_or(false);
       let visible = self.is_visible().unwrap_or(true);
       let decorated = self.is_decorated().unwrap_or(true);
+      let fullscreen = self.is_fullscreen().unwrap_or(false);
       c.insert(
         self.label().into(),
         WindowMetadata {
@@ -106,6 +109,7 @@ impl<R: Runtime> WindowExt for Window<R> {
           maximized,
           visible,
           decorated,
+          fullscreen,
         },
       );
     }
@@ -182,8 +186,10 @@ impl Builder {
             let mut c = cache.lock().unwrap();
             if let Some(state) = c.get_mut(&label) {
               let is_maximized = window_clone.is_maximized().unwrap_or(false);
+              let is_fullscreen = window_clone.is_fullscreen().unwrap_or(false);
               state.decorated = window_clone.is_decorated().unwrap_or(true);
               state.maximized = is_maximized;
+              state.fullscreen = is_fullscreen;
 
               // It doesn't make sense to save a window with 0 height or width
               if size.width > 0 && size.height > 0 && !is_maximized {
