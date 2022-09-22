@@ -137,6 +137,23 @@ impl Default for Builder {
 }
 
 impl Builder {
+  pub fn with_auto_show(mut self, auto_show: bool) -> Self {
+    self.auto_show = auto_show;
+
+    self
+  }
+
+  pub fn with_exlude_windows(mut self, exlude_windows: &[&str]) -> Self {
+    if !exlude_windows.is_empty() {
+      let mut exlude_set: HashSet<String> = HashSet::with_capacity(exlude_windows.len());
+      for win in exlude_windows {
+        exlude_set.insert(win.to_string());
+      }
+      self.exlude_windows = Some(exlude_set);
+    }
+    self
+  }
+
   pub fn build<R: Runtime>(self) -> TauriPlugin<R> {
     PluginBuilder::new("window-state")
       .setup(|app| {
@@ -222,21 +239,5 @@ impl Builder {
         }
       })
       .build()
-  }
-  pub fn set_auto_show(mut self, auto_show: bool) -> Self {
-    self.auto_show = auto_show;
-
-    self
-  }
-
-  pub fn set_exlude_windows(mut self, exlude_windows: &[&str]) -> Self {
-    if !exlude_windows.is_empty() {
-      let mut exlude_set: HashSet<String> = HashSet::with_capacity(exlude_windows.len());
-      for win in exlude_windows {
-        exlude_set.insert(win.to_string());
-      }
-      self.exlude_windows = Some(exlude_set);
-    }
-    self
   }
 }
