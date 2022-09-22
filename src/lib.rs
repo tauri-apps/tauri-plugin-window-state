@@ -137,18 +137,24 @@ impl Default for Builder {
 }
 
 impl Builder {
+  /// Whether to enable or disable automatically showing the window
+  ///
+  /// - `true`: the window will be automatically shown if the last stored state for visibility was `true`
+  /// - `false`: the window will not be automatically shown by this plugin
   pub fn with_auto_show(mut self, auto_show: bool) -> Self {
     self.auto_show = auto_show;
     self
   }
 
+  /// Sets a black list of windows that shouldn't be tracked and managed by this plugin
+  /// for example splash screen widnows.
   pub fn with_blacklist(mut self, blacklist: &[&str]) -> Self {
     if !blacklist.is_empty() {
-      let mut exlude_set: HashSet<String> = HashSet::with_capacity(blacklist.len());
+      let mut blacklist_set: HashSet<String> = HashSet::with_capacity(blacklist.len());
       for win in blacklist {
-        exlude_set.insert(win.to_string());
+        blacklist_set.insert(win.to_string());
       }
-      self.blacklist = Some(exlude_set);
+      self.blacklist = Some(blacklist_set);
     }
     self
   }
