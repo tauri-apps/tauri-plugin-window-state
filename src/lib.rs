@@ -137,6 +137,10 @@ impl Default for Builder {
 }
 
 impl Builder {
+  /// Whether to enable or disable automatically showing the window
+  /// 
+  /// - `true`: the window will be automatically shown if the last stored state for visibility was `true`
+  /// - `false`: the window will not be automatically shown by this plugin
   pub fn with_auto_show(mut self, auto_show: bool) -> Self {
     self.auto_show = auto_show;
     self
