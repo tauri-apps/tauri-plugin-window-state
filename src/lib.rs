@@ -9,7 +9,7 @@ use tauri::{
 };
 
 use std::{
-  collections::HashMap,
+  collections::{HashMap, HashSet},
   fs::{create_dir_all, File},
   io::Write,
   sync::{Arc, Mutex},
@@ -124,11 +124,15 @@ impl<R: Runtime> WindowExt for Window<R> {
 
 pub struct Builder {
   auto_show: bool,
+  exlude_windows: Option<HashSet<String>>,
 }
 
 impl Default for Builder {
   fn default() -> Self {
-    Builder { auto_show: true }
+    Builder {
+      auto_show: true,
+      exlude_windows: None,
+    }
   }
 }
 
@@ -156,6 +160,11 @@ impl Builder {
         Ok(())
       })
       .on_webview_ready(move |window| {
+        if let Some(exlude_windows) = &self.exlude_windows {
+          if exlude_windows.contains(window.label()) {
+            return;
+          }
+        }
         let _ = window.restore_state(self.auto_show);
 
         let cache = window.state::<WindowStateCache>();
@@ -217,6 +226,17 @@ impl Builder {
   pub fn set_auto_show(mut self, auto_show: bool) -> Self {
     self.auto_show = auto_show;
 
+    self
+  }
+
+  pub fn set_exlude_windows(mut self, exlude_windows: &[&str]) -> Self {
+    if !exlude_windows.is_empty() {
+      let mut exlude_set: HashSet<String> = HashSet::with_capacity(exlude_windows.len());
+      for win in exlude_windows {
+        exlude_set.insert(win.to_string());
+      }
+      self.exlude_windows = Some(exlude_set);
+    }
     self
   }
 }
