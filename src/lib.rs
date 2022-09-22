@@ -124,14 +124,14 @@ impl<R: Runtime> WindowExt for Window<R> {
 
 pub struct Builder {
   auto_show: bool,
-  exlude_windows: Option<HashSet<String>>,
+  blacklist: Option<HashSet<String>>,
 }
 
 impl Default for Builder {
   fn default() -> Self {
     Builder {
       auto_show: true,
-      exlude_windows: None,
+      blacklist: None,
     }
   }
 }
@@ -139,17 +139,16 @@ impl Default for Builder {
 impl Builder {
   pub fn with_auto_show(mut self, auto_show: bool) -> Self {
     self.auto_show = auto_show;
-
     self
   }
 
-  pub fn with_exlude_windows(mut self, exlude_windows: &[&str]) -> Self {
-    if !exlude_windows.is_empty() {
-      let mut exlude_set: HashSet<String> = HashSet::with_capacity(exlude_windows.len());
-      for win in exlude_windows {
+  pub fn with_blacklist(mut self, blacklist: &[&str]) -> Self {
+    if !blacklist.is_empty() {
+      let mut exlude_set: HashSet<String> = HashSet::with_capacity(blacklist.len());
+      for win in blacklist {
         exlude_set.insert(win.to_string());
       }
-      self.exlude_windows = Some(exlude_set);
+      self.blacklist = Some(exlude_set);
     }
     self
   }
@@ -177,8 +176,8 @@ impl Builder {
         Ok(())
       })
       .on_webview_ready(move |window| {
-        if let Some(exlude_windows) = &self.exlude_windows {
-          if exlude_windows.contains(window.label()) {
+        if let Some(blacklist) = &self.blacklist {
+          if blacklist.contains(window.label()) {
             return;
           }
         }
