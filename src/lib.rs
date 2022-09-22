@@ -144,11 +144,11 @@ impl Builder {
 
   pub fn with_blacklist(mut self, blacklist: &[&str]) -> Self {
     if !blacklist.is_empty() {
-      let mut exlude_set: HashSet<String> = HashSet::with_capacity(blacklist.len());
+      let mut blacklist_set: HashSet<String> = HashSet::with_capacity(blacklist.len());
       for win in blacklist {
         exlude_set.insert(win.to_string());
       }
-      self.blacklist = Some(exlude_set);
+      self.blacklist = Some(blacklist_set);
     }
     self
   }
