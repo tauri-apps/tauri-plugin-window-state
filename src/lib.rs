@@ -146,6 +146,8 @@ impl Builder {
     self
   }
 
+  /// Sets a black list of windows that shouldn't be tracked and managed by this plugin
+  /// for example splash screen widnows.
   pub fn with_blacklist(mut self, blacklist: &[&str]) -> Self {
     if !blacklist.is_empty() {
       let mut blacklist_set: HashSet<String> = HashSet::with_capacity(blacklist.len());
