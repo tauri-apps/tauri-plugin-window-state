@@ -14,7 +14,7 @@ jobs:
           fetch-depth: 0
 
       - name: cargo login
-        run: cargo login ${{ secrets.CRATE_TOKEN }}
+        run: cargo login ${{ secrets.ORG_CRATES_IO_TOKEN }}
 
       - name: git config
         run: |
