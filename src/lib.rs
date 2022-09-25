@@ -78,10 +78,33 @@ impl<R: Runtime> WindowExt for Window<R> {
     let mut should_show = true;
     if let Some(state) = c.get(self.label()) {
       self.set_decorations(state.decorated)?;
-      self.set_position(Position::Physical(PhysicalPosition {
-        x: state.x,
-        y: state.y,
-      }))?;
+
+      let mut pos: Option<(i32, i32)> = None;
+      for m in self.available_monitors()? {
+        let mpos = m.position();
+        let msize = m.size();
+        if mpos.x < state.x
+          && state.x > mpos.x + msize.width as i32
+          && mpos.y < state.y
+          && state.y < mpos.y + msize.height as i32
+        {
+          pos = Some((state.x, state.y));
+          break;
+        }
+      }
+      let (x, y) = match pos {
+        Some((x, y)) => (x, y),
+        None => {
+          if let Some(m) = self.primary_monitor()? {
+            let mpos = m.position();
+            (mpos.x, mpos.y)
+          } else {
+            (100, 100)
+          }
+        }
+      };
+      self.set_position(Position::Physical(PhysicalPosition { x, y }))?;
+
       self.set_size(Size::Physical(PhysicalSize {
         width: state.width,
         height: state.height,
