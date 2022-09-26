@@ -41,6 +41,7 @@ struct WindowMetadata {
   visible: bool,
   decorated: bool,
   fullscreen: bool,
+  monitor: String,
 }
 
 struct WindowStateCache(Arc<Mutex<HashMap<String, WindowMetadata>>>);
@@ -81,13 +82,7 @@ impl<R: Runtime> WindowExt for Window<R> {
 
       let mut pos: Option<(i32, i32)> = None;
       for m in self.available_monitors()? {
-        let mpos = m.position();
-        let msize = m.size();
-        if mpos.x < state.x
-          && state.x > mpos.x + msize.width as i32
-          && mpos.y < state.y
-          && state.y < mpos.y + msize.height as i32
-        {
+        if m.name().map(ToString::to_string).unwrap_or_default() == state.monitor {
           pos = Some((state.x, state.y));
           break;
         }
@@ -95,7 +90,7 @@ impl<R: Runtime> WindowExt for Window<R> {
       let (x, y) = match pos {
         Some((x, y)) => (x, y),
         None => {
-          if let Some(m) = self.primary_monitor()? {
+          if let Some(m) = self.current_monitor()? {
             let mpos = m.position();
             (mpos.x, mpos.y)
           } else {
@@ -122,6 +117,12 @@ impl<R: Runtime> WindowExt for Window<R> {
       let visible = self.is_visible().unwrap_or(true);
       let decorated = self.is_decorated().unwrap_or(true);
       let fullscreen = self.is_fullscreen().unwrap_or(false);
+      let monitor = self
+        .current_monitor()?
+        .unwrap()
+        .name()
+        .map(ToString::to_string)
+        .unwrap_or_default();
       c.insert(
         self.label().into(),
         WindowMetadata {
@@ -133,6 +134,7 @@ impl<R: Runtime> WindowExt for Window<R> {
           visible,
           decorated,
           fullscreen,
+          monitor,
         },
       );
     }
@@ -224,6 +226,7 @@ impl Builder {
               state.maximized = is_maximized;
 
               if let Some(monitor) = window_clone.current_monitor().unwrap() {
+                state.monitor = monitor.name().map(ToString::to_string).unwrap_or_default();
                 let monitor_position = monitor.position();
                 // save only window positions that are inside the current monitor
                 if position.x > monitor_position.x
