@@ -41,6 +41,7 @@ struct WindowMetadata {
   visible: bool,
   decorated: bool,
   fullscreen: bool,
+  monitor: String,
 }
 
 struct WindowStateCache(Arc<Mutex<HashMap<String, WindowMetadata>>>);
@@ -78,10 +79,27 @@ impl<R: Runtime> WindowExt for Window<R> {
     let mut should_show = true;
     if let Some(state) = c.get(self.label()) {
       self.set_decorations(state.decorated)?;
-      self.set_position(Position::Physical(PhysicalPosition {
-        x: state.x,
-        y: state.y,
-      }))?;
+
+      let mut pos: Option<(i32, i32)> = None;
+      for m in self.available_monitors()? {
+        if m.name().map(ToString::to_string).unwrap_or_default() == state.monitor {
+          pos = Some((state.x, state.y));
+          break;
+        }
+      }
+      let (x, y) = match pos {
+        Some((x, y)) => (x, y),
+        None => {
+          if let Some(m) = self.current_monitor()? {
+            let mpos = m.position();
+            (mpos.x + 100, mpos.y + 100)
+          } else {
+            (100, 100)
+          }
+        }
+      };
+      self.set_position(Position::Physical(PhysicalPosition { x, y }))?;
+
       self.set_size(Size::Physical(PhysicalSize {
         width: state.width,
         height: state.height,
@@ -99,6 +117,12 @@ impl<R: Runtime> WindowExt for Window<R> {
       let visible = self.is_visible().unwrap_or(true);
       let decorated = self.is_decorated().unwrap_or(true);
       let fullscreen = self.is_fullscreen().unwrap_or(false);
+      let monitor = self
+        .current_monitor()?
+        .unwrap()
+        .name()
+        .map(ToString::to_string)
+        .unwrap_or_default();
       c.insert(
         self.label().into(),
         WindowMetadata {
@@ -110,6 +134,7 @@ impl<R: Runtime> WindowExt for Window<R> {
           visible,
           decorated,
           fullscreen,
+          monitor,
         },
       );
     }
@@ -201,6 +226,7 @@ impl Builder {
               state.maximized = is_maximized;
 
               if let Some(monitor) = window_clone.current_monitor().unwrap() {
+                state.monitor = monitor.name().map(ToString::to_string).unwrap_or_default();
                 let monitor_position = monitor.position();
                 // save only window positions that are inside the current monitor
                 if position.x > monitor_position.x
