@@ -92,7 +92,7 @@ impl<R: Runtime> WindowExt for Window<R> {
         None => {
           if let Some(m) = self.current_monitor()? {
             let mpos = m.position();
-            (mpos.x, mpos.y)
+            (mpos.x + 100, mpos.y + 100)
           } else {
             (100, 100)
           }
