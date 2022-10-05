@@ -149,14 +149,16 @@ impl<R: Runtime> WindowExt for Window<R> {
 
 pub struct Builder {
   auto_show: bool,
-  denylist: Option<HashSet<String>>,
+  denylist: HashSet<String>,
+  skip_initial_state: HashSet<String>,
 }
 
 impl Default for Builder {
   fn default() -> Self {
     Builder {
       auto_show: true,
-      denylist: None,
+      denylist: Default::default(),
+      skip_initial_state: Default::default(),
     }
   }
 }
@@ -174,13 +176,13 @@ impl Builder {
   /// Sets a list of windows that shouldn't be tracked and managed by this plugin
   /// for example splash screen widnows.
   pub fn with_denylist(mut self, denylist: &[&str]) -> Self {
-    if !denylist.is_empty() {
-      let mut denylist_set: HashSet<String> = HashSet::with_capacity(denylist.len());
-      for win in denylist {
-        denylist_set.insert(win.to_string());
-      }
-      self.denylist = Some(denylist_set);
-    }
+    self.denylist = denylist.into_iter().map(|l| l.to_string()).collect();
+    self
+  }
+
+  /// Adds the given window label to a list of windows to skip initial state restore.
+  pub fn skip_initial_state(mut self, label: &str) -> Self {
+    self.skip_initial_state.insert(label.into());
     self
   }
 
@@ -207,12 +209,13 @@ impl Builder {
         Ok(())
       })
       .on_webview_ready(move |window| {
-        if let Some(denylist) = &self.denylist {
-          if denylist.contains(window.label()) {
-            return;
-          }
+        if self.denylist.contains(window.label()) {
+          return;
         }
-        let _ = window.restore_state(self.auto_show);
+
+        if !self.skip_initial_state.contains(window.label()) {
+          let _ = window.restore_state(self.auto_show);
+        }
 
         let cache = window.state::<WindowStateCache>();
         let cache = cache.0.clone();
