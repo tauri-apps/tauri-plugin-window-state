@@ -149,14 +149,14 @@ impl<R: Runtime> WindowExt for Window<R> {
 
 pub struct Builder {
   auto_show: bool,
-  blacklist: Option<HashSet<String>>,
+  denylist: Option<HashSet<String>>,
 }
 
 impl Default for Builder {
   fn default() -> Self {
     Builder {
       auto_show: true,
-      blacklist: None,
+      denylist: None,
     }
   }
 }
@@ -171,15 +171,15 @@ impl Builder {
     self
   }
 
-  /// Sets a black list of windows that shouldn't be tracked and managed by this plugin
+  /// Sets a list of windows that shouldn't be tracked and managed by this plugin
   /// for example splash screen widnows.
-  pub fn with_blacklist(mut self, blacklist: &[&str]) -> Self {
-    if !blacklist.is_empty() {
-      let mut blacklist_set: HashSet<String> = HashSet::with_capacity(blacklist.len());
-      for win in blacklist {
-        blacklist_set.insert(win.to_string());
+  pub fn with_denylist(mut self, denylist: &[&str]) -> Self {
+    if !denylist.is_empty() {
+      let mut denylist_set: HashSet<String> = HashSet::with_capacity(denylist.len());
+      for win in denylist {
+        denylist_set.insert(win.to_string());
       }
-      self.blacklist = Some(blacklist_set);
+      self.denylist = Some(denylist_set);
     }
     self
   }
@@ -207,8 +207,8 @@ impl Builder {
         Ok(())
       })
       .on_webview_ready(move |window| {
-        if let Some(blacklist) = &self.blacklist {
-          if blacklist.contains(window.label()) {
+        if let Some(denylist) = &self.denylist {
+          if denylist.contains(window.label()) {
             return;
           }
         }
