@@ -80,6 +80,11 @@ impl<R: Runtime> WindowExt for Window<R> {
     if let Some(state) = c.get(self.label()) {
       self.set_decorations(state.decorated)?;
 
+      self.set_size(Size::Physical(PhysicalSize {
+        width: state.width,
+        height: state.height,
+      }))?;
+      
       let mut pos: Option<(i32, i32)> = None;
       for m in self.available_monitors()? {
         if m.name().map(ToString::to_string).unwrap_or_default() == state.monitor {
@@ -100,10 +105,6 @@ impl<R: Runtime> WindowExt for Window<R> {
       };
       self.set_position(Position::Physical(PhysicalPosition { x, y }))?;
 
-      self.set_size(Size::Physical(PhysicalSize {
-        width: state.width,
-        height: state.height,
-      }))?;
       if state.maximized {
         self.maximize()?;
       }
