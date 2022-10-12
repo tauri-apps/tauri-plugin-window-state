@@ -177,7 +177,7 @@ impl Builder {
   /// Sets a list of windows that shouldn't be tracked and managed by this plugin
   /// for example splash screen widnows.
   pub fn with_denylist(mut self, denylist: &[&str]) -> Self {
-    self.denylist = denylist.into_iter().map(|l| l.to_string()).collect();
+    self.denylist = denylist.iter().map(|l| l.to_string()).collect();
     self
   }
 
