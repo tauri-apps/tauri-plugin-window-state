@@ -84,7 +84,6 @@ impl<R: Runtime> WindowExt for Window<R> {
         width: state.width,
         height: state.height,
       }))?;
-      
       let mut pos: Option<(i32, i32)> = None;
       for m in self.available_monitors()? {
         if m.name().map(ToString::to_string).unwrap_or_default() == state.monitor {
