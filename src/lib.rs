@@ -72,6 +72,10 @@ pub trait WindowExt {
   fn restore_state(&self, auto_show: bool) -> tauri::Result<()>;
 }
 
+fn scale_dimension(size: u32, factor: f64) -> u32 {
+  ((size as f64) * factor) as u32
+}
+
 impl<R: Runtime> WindowExt for Window<R> {
   fn restore_state(&self, auto_show: bool) -> tauri::Result<()> {
     let cache = self.state::<WindowStateCache>();
@@ -80,9 +84,13 @@ impl<R: Runtime> WindowExt for Window<R> {
     if let Some(state) = c.get(self.label()) {
       self.set_decorations(state.decorated)?;
 
+      let mut scale_factor: f64 = 1.0;
+      if let Some(m) = self.current_monitor()? {
+        scale_factor = m.scale_factor();
+      }
       self.set_size(Size::Physical(PhysicalSize {
-        width: state.width,
-        height: state.height,
+        width: scale_dimension(state.width, scale_factor),
+        height: scale_dimension(state.height, scale_factor),
       }))?;
 
       let mut pos: Option<(i32, i32)> = None;
@@ -112,8 +120,9 @@ impl<R: Runtime> WindowExt for Window<R> {
 
       should_show = state.visible;
     } else {
-      let PhysicalSize { width, height } = self.inner_size()?;
+      let PhysicalSize { mut width, mut height } = self.inner_size()?;
       let PhysicalPosition { x, y } = self.outer_position()?;
+      let scale_factor = self.current_monitor()?.unwrap().scale_factor();
       let maximized = self.is_maximized().unwrap_or(false);
       let visible = self.is_visible().unwrap_or(true);
       let decorated = self.is_decorated().unwrap_or(true);
@@ -124,6 +133,8 @@ impl<R: Runtime> WindowExt for Window<R> {
         .name()
         .map(ToString::to_string)
         .unwrap_or_default();
+      width = scale_dimension(width, scale_factor);
+      height = scale_dimension(height, scale_factor);
       c.insert(
         self.label().into(),
         WindowMetadata {
