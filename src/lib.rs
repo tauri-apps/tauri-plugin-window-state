@@ -29,10 +29,14 @@ pub enum Error {
   Bincode(#[from] Box<bincode::ErrorKind>),
 }
 
+/// Defines how the window visibility should be restored.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum Show {
+  /// The window will always be shown, regardless of what's the last stored state was.
   Always,
+  /// The window will be automatically shown if the last stored state for visibility was `true`.
   Auto,
+  /// The window will not be automatically shown by this plugin.
   Never,
 }
 
@@ -178,18 +182,14 @@ impl Default for Builder {
 }
 
 impl Builder {
-  /// Whether to enable or disable automatically showing the window
-  ///
-  /// - `Always`: the window will always be shown, regardless of what the last store state was
-  /// - `Auto`: the window will be automatically shown if the last stored state for visibility was `true`
-  /// - `Never`: the window will not be automatically shown by this plugin
+  /// Sets how the window visibility should be restored.
   pub fn with_auto_show(mut self, auto_show: Show) -> Self {
     self.auto_show = auto_show;
     self
   }
 
   /// Sets a list of windows that shouldn't be tracked and managed by this plugin
-  /// for example splash screen widnows.
+  /// for example splash screen windows.
   pub fn with_denylist(mut self, denylist: &[&str]) -> Self {
     self.denylist = denylist.iter().map(|l| l.to_string()).collect();
     self
