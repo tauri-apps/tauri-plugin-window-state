@@ -32,7 +32,7 @@ pub enum Error {
 /// Defines how the window visibility should be restored.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum Show {
-  /// The window will always be shown, regardless of what's the last stored state was.
+  /// The window will always be shown, regardless of what the last stored state was.
   Always,
   /// The window will be automatically shown if the last stored state for visibility was `true`.
   Auto,
