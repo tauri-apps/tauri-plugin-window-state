@@ -29,6 +29,13 @@ pub enum Error {
   Bincode(#[from] Box<bincode::ErrorKind>),
 }
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum Show {
+  Always,
+  Auto,
+  Never,
+}
+
 pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, Default, Deserialize, Serialize)]
@@ -69,11 +76,11 @@ impl<R: Runtime> AppHandleExt for tauri::AppHandle<R> {
 }
 
 pub trait WindowExt {
-  fn restore_state(&self, auto_show: bool) -> tauri::Result<()>;
+  fn restore_state(&self, auto_show: Show) -> tauri::Result<()>;
 }
 
 impl<R: Runtime> WindowExt for Window<R> {
-  fn restore_state(&self, auto_show: bool) -> tauri::Result<()> {
+  fn restore_state(&self, auto_show: Show) -> tauri::Result<()> {
     let cache = self.state::<WindowStateCache>();
     let mut c = cache.0.lock().unwrap();
     let mut should_show = true;
@@ -144,7 +151,8 @@ impl<R: Runtime> WindowExt for Window<R> {
         },
       );
     }
-    if auto_show && should_show {
+
+    if auto_show == Show::Always || (auto_show == Show::Auto && should_show) {
       self.show()?;
       self.set_focus()?;
     }
@@ -154,7 +162,7 @@ impl<R: Runtime> WindowExt for Window<R> {
 }
 
 pub struct Builder {
-  auto_show: bool,
+  auto_show: Show,
   denylist: HashSet<String>,
   skip_initial_state: HashSet<String>,
 }
@@ -162,7 +170,7 @@ pub struct Builder {
 impl Default for Builder {
   fn default() -> Self {
     Builder {
-      auto_show: true,
+      auto_show: Show::Auto,
       denylist: Default::default(),
       skip_initial_state: Default::default(),
     }
@@ -172,9 +180,10 @@ impl Default for Builder {
 impl Builder {
   /// Whether to enable or disable automatically showing the window
   ///
-  /// - `true`: the window will be automatically shown if the last stored state for visibility was `true`
-  /// - `false`: the window will not be automatically shown by this plugin
-  pub fn with_auto_show(mut self, auto_show: bool) -> Self {
+  /// - `Always`: the window will always be shown, regardless of what's the last store state was
+  /// - `Auto`: the window will be automatically shown if the last stored state for visibility was `true`
+  /// - `Never`: the window will not be automatically shown by this plugin
+  pub fn with_auto_show(mut self, auto_show: Show) -> Self {
     self.auto_show = auto_show;
     self
   }
