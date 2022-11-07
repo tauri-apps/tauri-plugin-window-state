@@ -5,7 +5,7 @@
 use serde::{Deserialize, Serialize};
 use tauri::{
   plugin::{Builder as PluginBuilder, TauriPlugin},
-  Manager, PhysicalPosition, PhysicalSize, Position, RunEvent, Runtime, Size, Window, WindowEvent,
+  LogicalPosition, LogicalSize, Manager, RunEvent, Runtime, Window, WindowEvent,
 };
 
 use std::{
@@ -33,8 +33,8 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, Default, Deserialize, Serialize)]
 struct WindowMetadata {
-  width: u32,
-  height: u32,
+  width: f64,
+  height: f64,
   x: i32,
   y: i32,
   maximized: bool,
@@ -72,10 +72,6 @@ pub trait WindowExt {
   fn restore_state(&self, auto_show: bool) -> tauri::Result<()>;
 }
 
-fn scale_dimension(size: u32, factor: f64) -> u32 {
-  ((size as f64) * factor) as u32
-}
-
 impl<R: Runtime> WindowExt for Window<R> {
   fn restore_state(&self, auto_show: bool) -> tauri::Result<()> {
     let cache = self.state::<WindowStateCache>();
@@ -84,15 +80,6 @@ impl<R: Runtime> WindowExt for Window<R> {
     if let Some(state) = c.get(self.label()) {
       self.set_decorations(state.decorated)?;
 
-      let mut scale_factor: f64 = 1.0;
-      if let Some(m) = self.current_monitor()? {
-        scale_factor = m.scale_factor();
-      }
-      self.set_size(Size::Physical(PhysicalSize {
-        width: scale_dimension(state.width, scale_factor),
-        height: scale_dimension(state.height, scale_factor),
-      }))?;
-
       let mut pos: Option<(i32, i32)> = None;
       for m in self.available_monitors()? {
         if m.name().map(ToString::to_string).unwrap_or_default() == state.monitor {
@@ -100,18 +87,24 @@ impl<R: Runtime> WindowExt for Window<R> {
           break;
         }
       }
+
+      self.set_size(LogicalSize {
+        width: state.width,
+        height: state.height,
+      })?;
+
       let (x, y) = match pos {
         Some((x, y)) => (x, y),
         None => {
           if let Some(m) = self.current_monitor()? {
-            let mpos = m.position();
+            let mpos = m.position().to_logical::<i32>(m.scale_factor());
             (mpos.x + 100, mpos.y + 100)
           } else {
             (100, 100)
           }
         }
       };
-      self.set_position(Position::Physical(PhysicalPosition { x, y }))?;
+      self.set_position(LogicalPosition { x, y })?;
 
       if state.maximized {
         self.maximize()?;
@@ -120,9 +113,12 @@ impl<R: Runtime> WindowExt for Window<R> {
 
       should_show = state.visible;
     } else {
-      let PhysicalSize { mut width, mut height } = self.inner_size()?;
-      let PhysicalPosition { x, y } = self.outer_position()?;
-      let scale_factor = self.current_monitor()?.unwrap().scale_factor();
+      let scale_factor = self
+        .current_monitor()?
+        .map(|m| m.scale_factor())
+        .unwrap_or(1.);
+      let LogicalSize { width, height } = self.inner_size()?.to_logical(scale_factor);
+      let LogicalPosition { x, y } = self.outer_position()?.to_logical(scale_factor);
       let maximized = self.is_maximized().unwrap_or(false);
       let visible = self.is_visible().unwrap_or(true);
       let decorated = self.is_decorated().unwrap_or(true);
@@ -133,8 +129,6 @@ impl<R: Runtime> WindowExt for Window<R> {
         .name()
         .map(ToString::to_string)
         .unwrap_or_default();
-      width = scale_dimension(width, scale_factor);
-      height = scale_dimension(height, scale_factor);
       c.insert(
         self.label().into(),
         WindowMetadata {
@@ -242,7 +236,8 @@ impl Builder {
 
               if let Some(monitor) = window_clone.current_monitor().unwrap() {
                 state.monitor = monitor.name().map(ToString::to_string).unwrap_or_default();
-                let monitor_position = monitor.position();
+                let scale_factor = monitor.scale_factor();
+                let monitor_position = monitor.position().to_logical(scale_factor);
                 // save only window positions that are inside the current monitor
                 if position.x > monitor_position.x
                   && position.y > monitor_position.y
@@ -255,6 +250,12 @@ impl Builder {
             }
           }
           WindowEvent::Resized(size) => {
+            let scale_factor = window_clone
+              .current_monitor()
+              .ok()
+              .map(|m| m.map(|m| m.scale_factor()).unwrap_or(1.))
+              .unwrap_or(1.);
+            let size = size.to_logical(scale_factor);
             let mut c = cache.lock().unwrap();
             if let Some(state) = c.get_mut(&label) {
               let is_maximized = window_clone.is_maximized().unwrap_or(false);
@@ -264,7 +265,7 @@ impl Builder {
               state.fullscreen = is_fullscreen;
 
               // It doesn't make sense to save a window with 0 height or width
-              if size.width > 0 && size.height > 0 && !is_maximized {
+              if size.width > 0. && size.height > 0. && !is_maximized {
                 state.width = size.width;
                 state.height = size.height;
               }
