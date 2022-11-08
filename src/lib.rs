@@ -40,6 +40,12 @@ pub enum ShowMode {
   Never,
 }
 
+impl Default for ShowMode {
+  fn default() -> Self {
+    Self::LastSaved
+  }
+}
+
 pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, Default, Deserialize, Serialize)]
@@ -174,7 +180,7 @@ pub struct Builder {
 impl Default for Builder {
   fn default() -> Self {
     Builder {
-      show_mode: ShowMode::LastSaved,
+      show_mode: Default::default(),
       denylist: Default::default(),
       skip_initial_state: Default::default(),
     }
@@ -183,6 +189,8 @@ impl Default for Builder {
 
 impl Builder {
   /// Sets how the window visibility should be restored.
+  ///
+  /// The default is [`ShowMode::LastSaved`]
   pub fn with_show_mode(mut self, show_mode: ShowMode) -> Self {
     self.show_mode = show_mode;
     self
