@@ -171,20 +171,11 @@ impl<R: Runtime> WindowExt for Window<R> {
   }
 }
 
+#[derive(Default)]
 pub struct Builder {
   show_mode: ShowMode,
   denylist: HashSet<String>,
   skip_initial_state: HashSet<String>,
-}
-
-impl Default for Builder {
-  fn default() -> Self {
-    Builder {
-      show_mode: Default::default(),
-      denylist: Default::default(),
-      skip_initial_state: Default::default(),
-    }
-  }
 }
 
 impl Builder {
