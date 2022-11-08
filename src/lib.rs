@@ -235,8 +235,9 @@ impl Builder {
               state.maximized = is_maximized;
 
               if let Some(monitor) = window_clone.current_monitor().unwrap() {
-                state.monitor = monitor.name().map(ToString::to_string).unwrap_or_default();
                 let scale_factor = monitor.scale_factor();
+                let position = position.to_logical(scale_factor);
+                state.monitor = monitor.name().map(ToString::to_string).unwrap_or_default();
                 let monitor_position = monitor.position().to_logical(scale_factor);
                 // save only window positions that are inside the current monitor
                 if position.x > monitor_position.x
