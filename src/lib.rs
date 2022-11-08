@@ -31,11 +31,11 @@ pub enum Error {
 
 /// Defines how the window visibility should be restored.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub enum Show {
+pub enum ShowMode {
   /// The window will always be shown, regardless of what the last stored state was.
   Always,
   /// The window will be automatically shown if the last stored state for visibility was `true`.
-  Auto,
+  LastSaved,
   /// The window will not be automatically shown by this plugin.
   Never,
 }
@@ -80,11 +80,11 @@ impl<R: Runtime> AppHandleExt for tauri::AppHandle<R> {
 }
 
 pub trait WindowExt {
-  fn restore_state(&self, auto_show: Show) -> tauri::Result<()>;
+  fn restore_state(&self, show_mode: ShowMode) -> tauri::Result<()>;
 }
 
 impl<R: Runtime> WindowExt for Window<R> {
-  fn restore_state(&self, auto_show: Show) -> tauri::Result<()> {
+  fn restore_state(&self, show_mode: ShowMode) -> tauri::Result<()> {
     let cache = self.state::<WindowStateCache>();
     let mut c = cache.0.lock().unwrap();
     let mut should_show = true;
@@ -156,7 +156,7 @@ impl<R: Runtime> WindowExt for Window<R> {
       );
     }
 
-    if auto_show == Show::Always || (auto_show == Show::Auto && should_show) {
+    if show_mode == ShowMode::Always || (show_mode == ShowMode::LastSaved && should_show) {
       self.show()?;
       self.set_focus()?;
     }
@@ -166,7 +166,7 @@ impl<R: Runtime> WindowExt for Window<R> {
 }
 
 pub struct Builder {
-  auto_show: Show,
+  show_mode: ShowMode,
   denylist: HashSet<String>,
   skip_initial_state: HashSet<String>,
 }
@@ -174,7 +174,7 @@ pub struct Builder {
 impl Default for Builder {
   fn default() -> Self {
     Builder {
-      auto_show: Show::Auto,
+      show_mode: ShowMode::LastSaved,
       denylist: Default::default(),
       skip_initial_state: Default::default(),
     }
@@ -183,8 +183,8 @@ impl Default for Builder {
 
 impl Builder {
   /// Sets how the window visibility should be restored.
-  pub fn with_auto_show(mut self, auto_show: Show) -> Self {
-    self.auto_show = auto_show;
+  pub fn with_show_mode(mut self, show_mode: ShowMode) -> Self {
+    self.show_mode = show_mode;
     self
   }
 
@@ -229,7 +229,7 @@ impl Builder {
         }
 
         if !self.skip_initial_state.contains(window.label()) {
-          let _ = window.restore_state(self.auto_show);
+          let _ = window.restore_state(self.show_mode);
         }
 
         let cache = window.state::<WindowStateCache>();
