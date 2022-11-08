@@ -29,6 +29,23 @@ pub enum Error {
   Bincode(#[from] Box<bincode::ErrorKind>),
 }
 
+/// Defines how the window visibility should be restored.
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum ShowMode {
+  /// The window will always be shown, regardless of what the last stored state was.
+  Always,
+  /// The window will be automatically shown if the last stored state for visibility was `true`.
+  LastSaved,
+  /// The window will not be automatically shown by this plugin.
+  Never,
+}
+
+impl Default for ShowMode {
+  fn default() -> Self {
+    Self::LastSaved
+  }
+}
+
 pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, Default, Deserialize, Serialize)]
@@ -69,11 +86,11 @@ impl<R: Runtime> AppHandleExt for tauri::AppHandle<R> {
 }
 
 pub trait WindowExt {
-  fn restore_state(&self, auto_show: bool) -> tauri::Result<()>;
+  fn restore_state(&self, show_mode: ShowMode) -> tauri::Result<()>;
 }
 
 impl<R: Runtime> WindowExt for Window<R> {
-  fn restore_state(&self, auto_show: bool) -> tauri::Result<()> {
+  fn restore_state(&self, show_mode: ShowMode) -> tauri::Result<()> {
     let cache = self.state::<WindowStateCache>();
     let mut c = cache.0.lock().unwrap();
     let mut should_show = true;
@@ -144,7 +161,8 @@ impl<R: Runtime> WindowExt for Window<R> {
         },
       );
     }
-    if auto_show && should_show {
+
+    if show_mode == ShowMode::Always || (show_mode == ShowMode::LastSaved && should_show) {
       self.show()?;
       self.set_focus()?;
     }
@@ -153,34 +171,24 @@ impl<R: Runtime> WindowExt for Window<R> {
   }
 }
 
+#[derive(Default)]
 pub struct Builder {
-  auto_show: bool,
+  show_mode: ShowMode,
   denylist: HashSet<String>,
   skip_initial_state: HashSet<String>,
 }
 
-impl Default for Builder {
-  fn default() -> Self {
-    Builder {
-      auto_show: true,
-      denylist: Default::default(),
-      skip_initial_state: Default::default(),
-    }
-  }
-}
-
 impl Builder {
-  /// Whether to enable or disable automatically showing the window
+  /// Sets how the window visibility should be restored.
   ///
-  /// - `true`: the window will be automatically shown if the last stored state for visibility was `true`
-  /// - `false`: the window will not be automatically shown by this plugin
-  pub fn with_auto_show(mut self, auto_show: bool) -> Self {
-    self.auto_show = auto_show;
+  /// The default is [`ShowMode::LastSaved`]
+  pub fn with_show_mode(mut self, show_mode: ShowMode) -> Self {
+    self.show_mode = show_mode;
     self
   }
 
   /// Sets a list of windows that shouldn't be tracked and managed by this plugin
-  /// for example splash screen widnows.
+  /// for example splash screen windows.
   pub fn with_denylist(mut self, denylist: &[&str]) -> Self {
     self.denylist = denylist.iter().map(|l| l.to_string()).collect();
     self
@@ -220,7 +228,7 @@ impl Builder {
         }
 
         if !self.skip_initial_state.contains(window.label()) {
-          let _ = window.restore_state(self.auto_show);
+          let _ = window.restore_state(self.show_mode);
         }
 
         let cache = window.state::<WindowStateCache>();
