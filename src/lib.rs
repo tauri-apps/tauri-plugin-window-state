@@ -68,7 +68,7 @@ pub trait AppHandleExt {
 
 impl<R: Runtime> AppHandleExt for tauri::AppHandle<R> {
   fn save_window_state(&self) -> Result<()> {
-    if let Some(app_dir) = self.path_resolver().app_dir() {
+    if let Some(app_dir) = self.path_resolver().app_config_dir() {
       let state_path = app_dir.join(STATE_FILENAME);
       let cache = self.state::<WindowStateCache>();
       let state = cache.0.lock().unwrap();
@@ -204,7 +204,7 @@ impl Builder {
     PluginBuilder::new("window-state")
       .setup(|app| {
         let cache: Arc<Mutex<HashMap<String, WindowMetadata>>> =
-          if let Some(app_dir) = app.path_resolver().app_dir() {
+          if let Some(app_dir) = app.path_resolver().app_config_dir() {
             let state_path = app_dir.join(STATE_FILENAME);
             if state_path.exists() {
               Arc::new(Mutex::new(

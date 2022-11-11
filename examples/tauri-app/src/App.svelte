@@ -16,13 +16,13 @@
   <h1>Welcome to Tauri!</h1>
 
   <div class="row">
-    <a href="https://vitejs.dev" target="_blank">
+    <a href="https://vitejs.dev" target="_blank noreferrer">
       <img src="/vite.svg" class="logo vite" alt="Vite Logo" />
     </a>
-    <a href="https://tauri.app" target="_blank">
+    <a href="https://tauri.app" target="_blank noreferrer">
       <img src="/tauri.svg" class="logo tauri" alt="Tauri Logo" />
     </a>
-    <a href="https://svelte.dev" target="_blank">
+    <a href="https://svelte.dev" target="_blank noreferrer">
       <img src="/svelte.svg" class="logo svelte" alt="Svelte Logo" />
     </a>
   </div>
