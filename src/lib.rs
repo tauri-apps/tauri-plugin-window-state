@@ -5,7 +5,7 @@
 use serde::{Deserialize, Serialize};
 use tauri::{
   plugin::{Builder as PluginBuilder, TauriPlugin},
-  LogicalPosition, LogicalSize, Manager, RunEvent, Runtime, Window, WindowEvent,
+  LogicalSize, Manager, PhysicalPosition, RunEvent, Runtime, Window, WindowEvent,
 };
 
 use std::{
@@ -97,31 +97,22 @@ impl<R: Runtime> WindowExt for Window<R> {
     if let Some(state) = c.get(self.label()) {
       self.set_decorations(state.decorated)?;
 
-      let mut pos: Option<(i32, i32)> = None;
-      for m in self.available_monitors()? {
-        if m.name().map(ToString::to_string).unwrap_or_default() == state.monitor {
-          pos = Some((state.x, state.y));
-          break;
-        }
-      }
-
       self.set_size(LogicalSize {
         width: state.width,
         height: state.height,
       })?;
 
-      let (x, y) = match pos {
-        Some((x, y)) => (x, y),
-        None => {
-          if let Some(m) = self.current_monitor()? {
-            let mpos = m.position().to_logical::<i32>(m.scale_factor());
-            (mpos.x + 100, mpos.y + 100)
-          } else {
-            (100, 100)
-          }
+      // restore position to saved value if saved monitor exists
+      // otherwise, let the OS decide where to place the window
+      for m in self.available_monitors()? {
+        if m.name().map(ToString::to_string).unwrap_or_default() == state.monitor {
+          self.set_position(PhysicalPosition {
+            x: state.x,
+            y: state.y,
+          })?;
+          break;
         }
-      };
-      self.set_position(LogicalPosition { x, y })?;
+      }
 
       if state.maximized {
         self.maximize()?;
@@ -135,7 +126,7 @@ impl<R: Runtime> WindowExt for Window<R> {
         .map(|m| m.scale_factor())
         .unwrap_or(1.);
       let LogicalSize { width, height } = self.inner_size()?.to_logical(scale_factor);
-      let LogicalPosition { x, y } = self.outer_position()?.to_logical(scale_factor);
+      let PhysicalPosition { x, y } = self.outer_position()?;
       let maximized = self.is_maximized().unwrap_or(false);
       let visible = self.is_visible().unwrap_or(true);
       let decorated = self.is_decorated().unwrap_or(true);
@@ -243,10 +234,8 @@ impl Builder {
               state.maximized = is_maximized;
 
               if let Some(monitor) = window_clone.current_monitor().unwrap() {
-                let scale_factor = monitor.scale_factor();
-                let position = position.to_logical(scale_factor);
                 state.monitor = monitor.name().map(ToString::to_string).unwrap_or_default();
-                let monitor_position = monitor.position().to_logical(scale_factor);
+                let monitor_position = monitor.position();
                 // save only window positions that are inside the current monitor
                 if position.x > monitor_position.x
                   && position.y > monitor_position.y
