@@ -96,7 +96,6 @@ impl<R: Runtime> WindowExt for Window<R> {
     let cache = self.state::<WindowStateCache>();
     let mut c = cache.0.lock().unwrap();
     let mut should_show = true;
-    println!("help {:?}", c.get(self.label()));
     if let Some(state) = c.get(self.label()) {
       self.set_decorations(state.decorated)?;
 
@@ -107,14 +106,6 @@ impl<R: Runtime> WindowExt for Window<R> {
 
       // restore position to saved value if saved monitor exists
       // otherwise, let the OS decide where to place the window
-      println!(
-        "{:?} is {}",
-        self
-          .available_monitors()?
-          .iter()
-          .map(|m| m.name().map(ToString::to_string)),
-        state.monitor
-      );
       for m in self.available_monitors()? {
         if m.name().map(ToString::to_string).unwrap_or_default() == state.monitor {
           if *m.position() == state.monitor_position && *m.size() == state.monitor_size {
