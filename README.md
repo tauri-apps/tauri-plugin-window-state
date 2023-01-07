@@ -1,35 +1,65 @@
-# Tauri Plugin Window State
-![Test](https://github.com/tauri-apps/tauri-plugin-window-state/workflows/Test/badge.svg)
+![plugin-window-state](banner.png)
 
-This plugin provides a Tauri Plugin that saves the window position and size and restores it when the app is reopened.
+Save window positions and sizse and restore them when the app is reopened.
 
-## Installation
+## Install
+
 There are three general methods of installation that we can recommend.
-1. Pull sources directly from Github using git tags / revision hashes (most secure, good for developement, shown below)
-2. Git submodule install this repo in your tauri project and then use `file` protocol to ingest the source
-3. Use crates.io and npm (easiest, and requires you to trust that our publishing pipeline worked)
 
-For more details and usage see [the example app](examples/tauri-app/src-tauri/src/main.rs).
-Please note, below in the dependencies you can also lock to a revision/tag in the `Cargo.toml`.
+1. Use crates.io and npm (easiest, and requires you to trust that our publishing pipeline worked)
+2. Pull sources directly from Github using git tags / revision hashes (most secure)
+3. Git submodule install this repo in your tauri project and then use file protocol to ingest the source (most secure, but inconvenient to use)
+
+Install the Core plugin by adding the following to your `Cargo.toml` file:
 
 `src-tauri/Cargo.toml`
-```yaml
+
+```toml
 [dependencies]
-tauri = "1.0"
-tauri-plugin-window-state = "0.1"
+tauri-plugin-window-state = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "dev" }
 ```
 
-Use in `src-tauri/src/main.rs`:
+## Usage
+
+First you need to register the core plugin with Tauri:
+
+`src-tauri/src/main.rs`
+
 ```rust
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_window_state::Builder::default().build())
-        .run();
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
 }
 ```
 
-To prevent flashes when the window is updated, the window `visible` property must be set to `false`.
-The plugin is responsible for showing it after restoring its state.
+Afterwards all windows will remember their state when the app is being closed and will restore to their previous state on the next launch.
 
-# License
-MIT / Apache-2.0
+Optionally you can also tell the plugin to save the state of all open window to disk my using the `save_window_state()` method exposed by the `AppHandleExt` trait:
+
+```rust
+use tauri_plugin_window_state::AppHandleExt;
+
+// `tauri::AppHandle` now has the following additional method
+app.save_window_state(); // will save the state of all open windows to disk
+```
+
+To manually restore a windows state from disk you can call the `restore_state()` method exposed by the `WindowExt` trait:
+
+```rust
+use tauri_plugin_window_state::{WindowExt, ShowMode};
+
+// all `Window` types now have the following additional method
+window.restore_state(ShowMode::LastSaved); // will restore the windows state from disk
+```
+
+## Contributing
+
+PRs accepted. Please make sure to read the Contributing Guide before making a pull request.
+
+## License
+
+Code: (c) 2015 - Present - The Tauri Programme within The Commons Conservancy.
+
+MIT or MIT/Apache 2.0 where applicable.
