@@ -15,13 +15,13 @@ var StateFlags;
  *  Save the state of all open windows to disk.
  */
 async function saveWindowState(flags) {
-    invoke("plugin:window-state|js_save_window_state", { flags });
+    invoke("plugin:window-state|save_window_state", { flags });
 }
 /**
  *  Restore the state for the specified window from disk.
  */
 async function restoreState(label, flags) {
-    invoke("plugin:window-state|js_restore_state", { label, flags });
+    invoke("plugin:window-state|restore_state", { label, flags });
 }
 /**
  *  Restore the state for the current window from disk.
