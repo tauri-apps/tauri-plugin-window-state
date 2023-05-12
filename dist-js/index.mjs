@@ -1,5 +1,4 @@
 import { invoke } from '@tauri-apps/api/tauri';
-import { getCurrent } from '@tauri-apps/api/window';
 
 var StateFlags;
 (function (StateFlags) {
@@ -27,7 +26,7 @@ async function restoreState(label, flags) {
  *  Restore the state for the current window from disk.
  */
 async function restoreStateCurrent(flags) {
-    restoreState(getCurrent().label, flags);
+    restoreState(window.__TAURI_METADATA__.__currentWindow.label, flags);
 }
 
 export { StateFlags, restoreState, restoreStateCurrent, saveWindowState };
