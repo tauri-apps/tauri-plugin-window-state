@@ -1,5 +1,7 @@
 ![plugin-window-state](banner.png)
 
+[DEPRECATED] Please use the plugin from https://github.com/tauri-apps/plugins-workspace instead.
+
 Save window positions and sizes and restore them when the app is reopened.
 
 ## Install
