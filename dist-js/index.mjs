@@ -1,5 +1,6 @@
 import { invoke } from '@tauri-apps/api/tauri';
 
+// Copyright 2019-2023 Tauri Programme within The Commons Conservancy
 var StateFlags;
 (function (StateFlags) {
     StateFlags[StateFlags["SIZE"] = 1] = "SIZE";
