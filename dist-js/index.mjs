@@ -1,6 +1,6 @@
-import { invoke } from '@tauri-apps/api/tauri';
-
 // Copyright 2019-2023 Tauri Programme within The Commons Conservancy
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: MIT
 var StateFlags;
 (function (StateFlags) {
     StateFlags[StateFlags["SIZE"] = 1] = "SIZE";
@@ -15,13 +15,16 @@ var StateFlags;
  *  Save the state of all open windows to disk.
  */
 async function saveWindowState(flags) {
-    invoke("plugin:window-state|save_window_state", { flags });
+    window.__TAURI_INVOKE__("plugin:window-state|save_window_state", { flags });
 }
 /**
  *  Restore the state for the specified window from disk.
  */
 async function restoreState(label, flags) {
-    invoke("plugin:window-state|restore_state", { label, flags });
+    window.__TAURI_INVOKE__("plugin:window-state|restore_state", {
+        label,
+        flags,
+    });
 }
 /**
  *  Restore the state for the current window from disk.
