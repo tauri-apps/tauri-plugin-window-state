@@ -1,3 +1,5 @@
+import { invoke } from '@tauri-apps/api/primitives';
+
 // Copyright 2019-2023 Tauri Programme within The Commons Conservancy
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: MIT
@@ -15,7 +17,7 @@ var StateFlags;
  *  Save the state of all open windows to disk.
  */
 async function saveWindowState(flags) {
-    return window.__TAURI_INVOKE__("plugin:window-state|save_window_state", {
+    return invoke("plugin:window-state|save_window_state", {
         flags,
     });
 }
@@ -23,7 +25,7 @@ async function saveWindowState(flags) {
  *  Restore the state for the specified window from disk.
  */
 async function restoreState(label, flags) {
-    return window.__TAURI_INVOKE__("plugin:window-state|restore_state", {
+    return invoke("plugin:window-state|restore_state", {
         label,
         flags,
     });
