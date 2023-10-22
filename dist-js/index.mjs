@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/primitives';
+import { getCurrent } from '@tauri-apps/api/window';
 
 // Copyright 2019-2023 Tauri Programme within The Commons Conservancy
 // SPDX-License-Identifier: Apache-2.0
@@ -34,7 +35,7 @@ async function restoreState(label, flags) {
  *  Restore the state for the current window from disk.
  */
 async function restoreStateCurrent(flags) {
-    return restoreState(window.__TAURI_METADATA__.__currentWindow.label, flags);
+    return restoreState(getCurrent().label, flags);
 }
 
 export { StateFlags, restoreState, restoreStateCurrent, saveWindowState };

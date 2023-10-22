@@ -1,14 +1,3 @@
-interface WindowDef {
-    label: string;
-}
-declare global {
-    interface Window {
-        __TAURI_METADATA__: {
-            __windows: WindowDef[];
-            __currentWindow: WindowDef;
-        };
-    }
-}
 export declare enum StateFlags {
     SIZE = 1,
     POSITION = 2,
