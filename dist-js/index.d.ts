@@ -1,3 +1,4 @@
+import { WindowLabel } from "@tauri-apps/api/window";
 export declare enum StateFlags {
     SIZE = 1,
     POSITION = 2,
@@ -14,7 +15,7 @@ declare function saveWindowState(flags: StateFlags): Promise<void>;
 /**
  *  Restore the state for the specified window from disk.
  */
-declare function restoreState(label: string, flags: StateFlags): Promise<void>;
+declare function restoreState(label: WindowLabel, flags: StateFlags): Promise<void>;
 /**
  *  Restore the state for the current window from disk.
  */
