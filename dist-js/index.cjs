@@ -1,10 +1,12 @@
-import { invoke } from '@tauri-apps/api/primitives';
-import { getCurrent } from '@tauri-apps/api/window';
+'use strict';
+
+var primitives = require('@tauri-apps/api/primitives');
+var window = require('@tauri-apps/api/window');
 
 // Copyright 2019-2023 Tauri Programme within The Commons Conservancy
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: MIT
-var StateFlags;
+exports.StateFlags = void 0;
 (function (StateFlags) {
     StateFlags[StateFlags["SIZE"] = 1] = "SIZE";
     StateFlags[StateFlags["POSITION"] = 2] = "POSITION";
@@ -13,25 +15,26 @@ var StateFlags;
     StateFlags[StateFlags["DECORATIONS"] = 16] = "DECORATIONS";
     StateFlags[StateFlags["FULLSCREEN"] = 32] = "FULLSCREEN";
     StateFlags[StateFlags["ALL"] = 63] = "ALL";
-})(StateFlags || (StateFlags = {}));
+})(exports.StateFlags || (exports.StateFlags = {}));
 /**
  *  Save the state of all open windows to disk.
  */
 async function saveWindowState(flags) {
-    return invoke("plugin:window-state|save_window_state", { flags });
+    return primitives.invoke("plugin:window-state|save_window_state", { flags });
 }
 /**
  *  Restore the state for the specified window from disk.
  */
 async function restoreState(label, flags) {
-    return invoke("plugin:window-state|restore_state", { label, flags });
+    return primitives.invoke("plugin:window-state|restore_state", { label, flags });
 }
 /**
  *  Restore the state for the current window from disk.
  */
 async function restoreStateCurrent(flags) {
-    return restoreState(getCurrent().label, flags);
+    return restoreState(window.getCurrent().label, flags);
 }
 
-export { StateFlags, restoreState, restoreStateCurrent, saveWindowState };
-//# sourceMappingURL=index.mjs.map
+exports.restoreState = restoreState;
+exports.restoreStateCurrent = restoreStateCurrent;
+exports.saveWindowState = saveWindowState;
