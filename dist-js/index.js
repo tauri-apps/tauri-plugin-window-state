@@ -1,4 +1,4 @@
-import { invoke } from '@tauri-apps/api/primitives';
+import { invoke } from '@tauri-apps/api/core';
 import { getCurrent } from '@tauri-apps/api/window';
 
 // Copyright 2019-2023 Tauri Programme within The Commons Conservancy
