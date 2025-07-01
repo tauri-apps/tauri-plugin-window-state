@@ -11,15 +11,15 @@ export declare enum StateFlags {
 /**
  *  Save the state of all open windows to disk.
  */
-declare function saveWindowState(flags: StateFlags): Promise<void>;
+declare function saveWindowState(flags?: StateFlags): Promise<void>;
 /**
  *  Restore the state for the specified window from disk.
  */
-declare function restoreState(label: WindowLabel, flags: StateFlags): Promise<void>;
+declare function restoreState(label: WindowLabel, flags?: StateFlags): Promise<void>;
 /**
  *  Restore the state for the current window from disk.
  */
-declare function restoreStateCurrent(flags: StateFlags): Promise<void>;
+declare function restoreStateCurrent(flags?: StateFlags): Promise<void>;
 /**
  *  Get the name of the file used to store window state.
  */
